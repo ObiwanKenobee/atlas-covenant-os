@@ -14,7 +14,245 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ledger_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          module: string
+          note: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          module: string
+          note?: string | null
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          module?: string
+          note?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
+      mission_contributions: {
+        Row: {
+          amount_cents: number
+          cause_id: string | null
+          contributor_id: string
+          created_at: string
+          id: string
+          matched_amount_cents: number
+          mission_id: string
+        }
+        Insert: {
+          amount_cents: number
+          cause_id?: string | null
+          contributor_id: string
+          created_at?: string
+          id?: string
+          matched_amount_cents?: number
+          mission_id: string
+        }
+        Update: {
+          amount_cents?: number
+          cause_id?: string | null
+          contributor_id?: string
+          created_at?: string
+          id?: string
+          matched_amount_cents?: number
+          mission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_contributions_cause_id_fkey"
+            columns: ["cause_id"]
+            isOneToOne: false
+            referencedRelation: "philanthropic_causes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mission_contributions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_votes: {
+        Row: {
+          created_at: string
+          id: string
+          mission_id: string
+          vote: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mission_id: string
+          vote: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mission_id?: string
+          vote?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_votes_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          approve_count: number
+          created_at: string
+          funding_current_cents: number
+          funding_goal_cents: number
+          id: string
+          module: string
+          proposer_id: string
+          quorum: number
+          reject_count: number
+          status: string
+          summary: string
+          title: string
+        }
+        Insert: {
+          approve_count?: number
+          created_at?: string
+          funding_current_cents?: number
+          funding_goal_cents?: number
+          id?: string
+          module: string
+          proposer_id: string
+          quorum?: number
+          reject_count?: number
+          status?: string
+          summary: string
+          title: string
+        }
+        Update: {
+          approve_count?: number
+          created_at?: string
+          funding_current_cents?: number
+          funding_goal_cents?: number
+          id?: string
+          module?: string
+          proposer_id?: string
+          quorum?: number
+          reject_count?: number
+          status?: string
+          summary?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      philanthropic_causes: {
+        Row: {
+          created_at: string
+          description: string
+          expected_impact: string | null
+          id: string
+          match_ratio: number
+          module: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          expected_impact?: string | null
+          id?: string
+          match_ratio?: number
+          module: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          expected_impact?: string | null
+          id?: string
+          match_ratio?: number
+          module?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          life_mission: string | null
+          mission_values: string[] | null
+          onboarded: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          life_mission?: string | null
+          mission_values?: string[] | null
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          life_mission?: string | null
+          mission_values?: string[] | null
+          onboarded?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reflection_prompts: {
+        Row: {
+          created_at: string
+          id: string
+          module: string
+          prompt: string
+          reflection: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module?: string
+          prompt: string
+          reflection?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module?: string
+          prompt?: string
+          reflection?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
