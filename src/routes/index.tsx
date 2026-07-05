@@ -64,9 +64,9 @@ function Index() {
               lies the cultivation of the soul.
             </p>
             <div className="flex items-center gap-6 pt-4">
-              <button className="bg-ink text-parchment px-6 py-2.5 rounded-full text-sm font-medium transition-transform hover:-translate-y-px ring-1 ring-ink">
+              <Link to="/auth" className="bg-ink text-parchment px-6 py-2.5 rounded-full text-sm font-medium transition-transform hover:-translate-y-px ring-1 ring-ink">
                 Enter the Sanctum
-              </button>
+              </Link>
               <button className="flex items-center gap-2 py-2 pr-3 pl-2 text-sm font-medium text-ink/60 hover:text-ink transition-colors">
                 <span className="size-4 shrink-0 rounded-full border border-ink/20 flex items-center justify-center">
                   <span className="size-1 bg-ink rounded-full" />
@@ -275,9 +275,9 @@ function Index() {
               </p>
             </div>
             <div className="pt-4">
-              <button className="bg-parchment text-ink px-6 py-2.5 rounded-full text-sm font-medium hover:-translate-y-px transition-transform">
+              <Link to="/auth" className="inline-block bg-parchment text-ink px-6 py-2.5 rounded-full text-sm font-medium hover:-translate-y-px transition-transform">
                 Request Covenant Membership
-              </button>
+              </Link>
             </div>
           </div>
         </div>
