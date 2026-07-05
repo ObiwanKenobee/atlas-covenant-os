@@ -9,38 +9,150 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSanctumRouteImport } from './routes/_authenticated/sanctum'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
+import { Route as AuthenticatedCommonsIndexRouteImport } from './routes/_authenticated/commons.index'
+import { Route as AuthenticatedCommonsNewRouteImport } from './routes/_authenticated/commons.new'
+import { Route as AuthenticatedCommonsIdRouteImport } from './routes/_authenticated/commons.$id'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSanctumRoute = AuthenticatedSanctumRouteImport.update({
+  id: '/sanctum',
+  path: '/sanctum',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGuideRoute = AuthenticatedGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCommonsIndexRoute =
+  AuthenticatedCommonsIndexRouteImport.update({
+    id: '/commons/',
+    path: '/commons/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommonsNewRoute = AuthenticatedCommonsNewRouteImport.update({
+  id: '/commons/new',
+  path: '/commons/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCommonsIdRoute = AuthenticatedCommonsIdRouteImport.update({
+  id: '/commons/$id',
+  path: '/commons/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/guide': typeof AuthenticatedGuideRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/sanctum': typeof AuthenticatedSanctumRoute
+  '/commons/$id': typeof AuthenticatedCommonsIdRoute
+  '/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/commons/': typeof AuthenticatedCommonsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/guide': typeof AuthenticatedGuideRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/sanctum': typeof AuthenticatedSanctumRoute
+  '/commons/$id': typeof AuthenticatedCommonsIdRoute
+  '/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/commons': typeof AuthenticatedCommonsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/guide': typeof AuthenticatedGuideRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/sanctum': typeof AuthenticatedSanctumRoute
+  '/_authenticated/commons/$id': typeof AuthenticatedCommonsIdRoute
+  '/_authenticated/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/_authenticated/commons/': typeof AuthenticatedCommonsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/guide'
+    | '/onboarding'
+    | '/sanctum'
+    | '/commons/$id'
+    | '/commons/new'
+    | '/commons/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/guide'
+    | '/onboarding'
+    | '/sanctum'
+    | '/commons/$id'
+    | '/commons/new'
+    | '/commons'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/guide'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/sanctum'
+    | '/_authenticated/commons/$id'
+    | '/_authenticated/commons/new'
+    | '/_authenticated/commons/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +160,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/sanctum': {
+      id: '/_authenticated/sanctum'
+      path: '/sanctum'
+      fullPath: '/sanctum'
+      preLoaderRoute: typeof AuthenticatedSanctumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/guide': {
+      id: '/_authenticated/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof AuthenticatedGuideRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/commons/': {
+      id: '/_authenticated/commons/'
+      path: '/commons'
+      fullPath: '/commons/'
+      preLoaderRoute: typeof AuthenticatedCommonsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/commons/new': {
+      id: '/_authenticated/commons/new'
+      path: '/commons/new'
+      fullPath: '/commons/new'
+      preLoaderRoute: typeof AuthenticatedCommonsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/commons/$id': {
+      id: '/_authenticated/commons/$id'
+      path: '/commons/$id'
+      fullPath: '/commons/$id'
+      preLoaderRoute: typeof AuthenticatedCommonsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedGuideRoute: typeof AuthenticatedGuideRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedSanctumRoute: typeof AuthenticatedSanctumRoute
+  AuthenticatedCommonsIdRoute: typeof AuthenticatedCommonsIdRoute
+  AuthenticatedCommonsNewRoute: typeof AuthenticatedCommonsNewRoute
+  AuthenticatedCommonsIndexRoute: typeof AuthenticatedCommonsIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedGuideRoute: AuthenticatedGuideRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedSanctumRoute: AuthenticatedSanctumRoute,
+  AuthenticatedCommonsIdRoute: AuthenticatedCommonsIdRoute,
+  AuthenticatedCommonsNewRoute: AuthenticatedCommonsNewRoute,
+  AuthenticatedCommonsIndexRoute: AuthenticatedCommonsIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
