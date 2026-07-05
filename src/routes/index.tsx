@@ -1,7 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import sacredGeometry from "@/assets/sacred-geometry.jpg";
-
-export const Route = createFileRoute("/")({
   component: Index,
 });
 
