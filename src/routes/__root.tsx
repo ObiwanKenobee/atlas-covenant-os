@@ -96,6 +96,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Atlas Sanctum OS — A Digital Cathedral for Human Flourishing" },
+      { name: "twitter:title", content: "Atlas Sanctum OS — A Digital Cathedral for Human Flourishing" },
+      { name: "description", content: "An AI-native operating system for community flourishing, regenerative investment, lifelong learning, and covenant stewardship." },
+      { property: "og:description", content: "An AI-native operating system for community flourishing, regenerative investment, lifelong learning, and covenant stewardship." },
+      { name: "twitter:description", content: "An AI-native operating system for community flourishing, regenerative investment, lifelong learning, and covenant stewardship." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6a95739e-9ac1-4dda-95f8-383166ec4d6b/id-preview-2240e089--ced393be-beb1-476b-9f9f-c54dd178f1a8.lovable.app-1783253298183.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6a95739e-9ac1-4dda-95f8-383166ec4d6b/id-preview-2240e089--ced393be-beb1-476b-9f9f-c54dd178f1a8.lovable.app-1783253298183.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
