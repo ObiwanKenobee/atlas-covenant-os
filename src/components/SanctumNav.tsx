@@ -1,5 +1,8 @@
 import { Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { amIAdmin } from "@/lib/sanctum.functions";
 
 const links = [
   { to: "/sanctum", label: "Ledger" },
@@ -9,6 +12,8 @@ const links = [
 
 export function SanctumNav() {
   const router = useRouter();
+  const check = useServerFn(amIAdmin);
+  const { data: admin } = useQuery({ queryKey: ["is-admin"], queryFn: () => check() });
   return (
     <header className="sticky top-0 z-40 bg-parchment/85 backdrop-blur border-b border-ink/5">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
@@ -26,6 +31,15 @@ export function SanctumNav() {
               {l.label}
             </Link>
           ))}
+          {admin?.isAdmin && (
+            <Link
+              to="/admin"
+              activeProps={{ className: "text-ink" }}
+              className="hover:text-copper transition-colors"
+            >
+              Admin
+            </Link>
+          )}
           <button
             onClick={async () => {
               await supabase.auth.signOut();
