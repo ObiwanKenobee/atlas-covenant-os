@@ -319,3 +319,98 @@ export const listCauses = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data;
   });
+
+// ---------- Admin ----------
+
+export const amIAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    return { isAdmin: !!data };
+  });
+
+const CauseInput = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(2).max(120),
+  description: z.string().min(4).max(2000),
+  module: z.enum(["learning", "commons", "earth", "arts", "sports", "health"]),
+  match_ratio: z.number().min(0).max(10),
+  expected_impact: z.string().max(500).nullable().optional(),
+});
+
+export const upsertCause = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => CauseInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const payload = {
+      name: data.name,
+      description: data.description,
+      module: data.module,
+      match_ratio: data.match_ratio,
+      expected_impact: data.expected_impact ?? null,
+    };
+    const q = data.id
+      ? context.supabase.from("philanthropic_causes").update(payload).eq("id", data.id)
+      : context.supabase.from("philanthropic_causes").insert(payload);
+    const { error } = await q;
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteCause = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("philanthropic_causes")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getGovernanceSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("governance_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const updateGovernanceSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), default_quorum: z.number().int().min(1).max(500) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("governance_settings")
+      .update({ default_quorum: data.default_quorum, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateMissionQuorum = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), quorum: z.number().int().min(1).max(500) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("missions")
+      .update({ quorum: data.quorum })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+

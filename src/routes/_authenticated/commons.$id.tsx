@@ -242,6 +242,106 @@ function MissionDetail() {
           </div>
         </section>
 
+        {/* Impact dashboard */}
+        {(() => {
+          const pledgeCents = contributions.reduce((s, c) => s + c.amount_cents, 0);
+          const matchedCents = contributions.reduce((s, c) => s + c.matched_amount_cents, 0);
+          const totalCents = pledgeCents + matchedCents;
+          const contributors = new Set(contributions.map((c) => c.contributor_id)).size;
+          const milestones = [25, 50, 75, 100];
+          const currentPct = mission.funding_goal_cents > 0
+            ? Math.min(100, ((mission.funding_current_cents) / mission.funding_goal_cents) * 100)
+            : 0;
+          return (
+            <section className="space-y-6">
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.3em] text-copper">Impact Dashboard</span>
+                <h2 className="font-serif text-2xl mt-1">Expected matched impact</h2>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-ink/5 ring-1 ring-ink/5 rounded-xl overflow-hidden">
+                {[
+                  { label: "Pledged", value: `$${(pledgeCents / 100).toLocaleString()}` },
+                  { label: "Matched", value: `$${(matchedCents / 100).toLocaleString()}` },
+                  { label: "Total impact", value: `$${(totalCents / 100).toLocaleString()}` },
+                  { label: "Contributors", value: String(contributors) },
+                ].map((s) => (
+                  <div key={s.label} className="bg-parchment p-6">
+                    <div className="text-[10px] uppercase tracking-widest text-copper">{s.label}</div>
+                    <div className="font-serif text-3xl mt-1">{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-stone-base/40 border border-ink/10 rounded-xl p-6 space-y-4">
+                <div className="flex justify-between text-[10px] uppercase tracking-widest text-ink/50">
+                  <span>Milestones toward goal</span>
+                  <span>{currentPct.toFixed(0)}% funded</span>
+                </div>
+                <div className="relative h-2 bg-ink/5 rounded-full">
+                  <div className="absolute inset-y-0 left-0 bg-copper rounded-full transition-all" style={{ width: `${currentPct}%` }} />
+                  {milestones.map((m) => {
+                    const reached = currentPct >= m;
+                    return (
+                      <div
+                        key={m}
+                        className="absolute -top-1"
+                        style={{ left: `calc(${m}% - 8px)` }}
+                      >
+                        <div className={"size-4 rounded-full border-2 " + (reached ? "bg-copper border-copper" : "bg-parchment border-ink/20")} />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="grid grid-cols-4 gap-3 pt-2">
+                  {milestones.map((m) => {
+                    const reached = currentPct >= m;
+                    const dollars = (mission.funding_goal_cents * m) / 100 / 100;
+                    return (
+                      <div key={m} className={"text-center p-3 rounded-lg border " + (reached ? "border-copper/40 bg-copper/5" : "border-ink/10")}>
+                        <div className={"font-serif text-lg " + (reached ? "text-copper" : "text-ink/60")}>{m}%</div>
+                        <div className="text-[10px] uppercase tracking-widest text-ink/50 mt-0.5">
+                          ${dollars.toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-ink/40 mt-1">
+                          {reached ? "reached" : "pending"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {matchingCauses.length > 0 && (
+                <div className="border border-ink/10 rounded-xl overflow-hidden divide-y divide-ink/5">
+                  <div className="px-4 py-2 bg-ink/5 text-[10px] uppercase tracking-widest text-ink/50">
+                    Matched impact projections
+                  </div>
+                  {matchingCauses.slice(0, 4).map((c) => {
+                    const projected = pledgeCents * Number(c.match_ratio);
+                    return (
+                      <div key={c.id} className="px-4 py-3 flex items-center justify-between text-sm">
+                        <div className="min-w-0">
+                          <div className="font-serif text-base truncate">{c.name}</div>
+                          <div className="text-[11px] text-ink/50 truncate">{c.expected_impact ?? c.description}</div>
+                        </div>
+                        <div className="text-right shrink-0 ml-4">
+                          <div className="font-serif text-lg text-copper">
+                            +${(projected / 100).toLocaleString()}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-widest text-ink/40">
+                            {Number(c.match_ratio).toFixed(2)}× match
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })()}
+
         {/* Contribution log */}
         <section className="space-y-4">
           <h3 className="font-serif text-2xl">Ledger of contributions</h3>
@@ -271,6 +371,7 @@ function MissionDetail() {
             ))}
           </div>
         </section>
+
       </main>
     </div>
   );
