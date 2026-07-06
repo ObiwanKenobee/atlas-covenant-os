@@ -26,6 +26,19 @@ function GuidePage() {
   });
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "answered" | "open">("all");
+
+  const filtered = (reflections ?? []).filter((r) => {
+    if (filter === "answered" && !r.reflection) return false;
+    if (filter === "open" && r.reflection) return false;
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (
+      r.prompt.toLowerCase().includes(q) ||
+      (r.reflection ?? "").toLowerCase().includes(q)
+    );
+  });
 
   const generate = useMutation({
     mutationFn: () => genPrompt(),
@@ -43,6 +56,9 @@ function GuidePage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save"),
   });
 
+  const answered = (reflections ?? []).filter((r) => r.reflection).length;
+  const total = (reflections ?? []).length;
+
   return (
     <div className="min-h-screen bg-parchment text-ink font-mono">
       <SanctumNav />
@@ -55,17 +71,54 @@ function GuidePage() {
           <p className="text-sm text-ink/60 max-w-[52ch]">
             The Guide offers one small prompt at a time. Sit with it. Answer honestly when you're ready.
           </p>
-          <button
-            onClick={() => generate.mutate()}
-            disabled={generate.isPending}
-            className="bg-ink text-parchment px-5 py-2.5 rounded-full text-xs uppercase tracking-widest disabled:opacity-50"
-          >
-            {generate.isPending ? "The Guide is listening…" : "Request a new prompt"}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => generate.mutate()}
+              disabled={generate.isPending}
+              className="bg-ink text-parchment px-5 py-2.5 rounded-full text-xs uppercase tracking-widest disabled:opacity-50"
+            >
+              {generate.isPending ? "The Guide is listening…" : "Request a new prompt"}
+            </button>
+            <span className="text-[10px] uppercase tracking-widest text-ink/40">
+              {answered}/{total} reflected
+            </span>
+          </div>
         </header>
 
+        <section className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-3 md:items-center">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search prompts and reflections…"
+              className="flex-1 bg-stone-base/40 border border-ink/10 rounded-lg px-4 py-2.5 text-sm outline-none focus:border-copper"
+            />
+            <div className="flex gap-1">
+              {(["all", "answered", "open"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={
+                    "text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full border transition-colors " +
+                    (filter === f
+                      ? "bg-ink text-parchment border-ink"
+                      : "border-ink/15 text-ink/60 hover:text-ink")
+                  }
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="text-[10px] uppercase tracking-widest text-ink/40">
+            {filtered.length} of {total} entries
+          </div>
+        </section>
+
+
+
         <section className="space-y-6">
-          {(reflections ?? []).map((r) => {
+          {filtered.map((r) => {
             const draft = drafts[r.id] ?? r.reflection ?? "";
             return (
               <article
@@ -112,12 +165,17 @@ function GuidePage() {
             );
           })}
 
-          {(!reflections || reflections.length === 0) && (
+          {filtered.length === 0 && (
             <div className="text-center py-16 border border-dashed border-ink/10 rounded-xl">
-              <p className="text-sm text-ink/50">No prompts yet. Request the first one above.</p>
+              <p className="text-sm text-ink/50">
+                {total === 0
+                  ? "No prompts yet. Request the first one above."
+                  : "No entries match your search."}
+              </p>
             </div>
           )}
         </section>
+
       </main>
     </div>
   );

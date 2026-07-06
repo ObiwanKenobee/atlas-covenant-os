@@ -4,6 +4,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
   getMyProfile,
   listMyLedger,
   addLedgerEntry,
@@ -25,6 +36,10 @@ const MODULES = [
 
 type ModuleKey = (typeof MODULES)[number]["key"];
 
+function dayKey(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
 function SanctumPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -42,6 +57,8 @@ function SanctumPage() {
   const [module, setModule] = useState<ModuleKey>("learning");
   const [kind, setKind] = useState("");
   const [value, setValue] = useState("1");
+  const [rangeDays, setRangeDays] = useState<number>(30);
+  const [focus, setFocus] = useState<ModuleKey | "all">("all");
 
   const log = useMutation({
     mutationFn: (input: { module: ModuleKey; kind: string; value: number }) =>
@@ -64,15 +81,55 @@ function SanctumPage() {
     return t;
   }, [ledger]);
 
-  // Human Flourishing Index — normalize each module against a soft target of 20 units, weighted.
   const index = useMemo(() => {
     let score = 0;
     for (const m of MODULES) {
       const normalized = Math.min(1, totals[m.key] / 20);
       score += normalized * m.weight;
     }
-    return Math.round(score * 1000) / 10; // 0–100
+    return Math.round(score * 1000) / 10;
   }, [totals]);
+
+  // Build daily time series over the window; running totals for HFI trend.
+  const series = useMemo(() => {
+    const days: string[] = [];
+    const now = new Date();
+    for (let i = rangeDays - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push(dayKey(d));
+    }
+    const perDay = new Map<string, Record<string, number>>();
+    for (const d of days) {
+      perDay.set(d, Object.fromEntries(MODULES.map((m) => [m.key, 0])));
+    }
+    for (const row of ledger ?? []) {
+      const d = dayKey(new Date(row.created_at));
+      const bucket = perDay.get(d);
+      if (bucket && row.module in bucket) bucket[row.module] += Number(row.value);
+    }
+    // Running totals across the whole ledger, projected onto the window.
+    const running: Record<string, number> = Object.fromEntries(MODULES.map((m) => [m.key, 0]));
+    const startCutoff = days[0];
+    for (const row of [...(ledger ?? [])].sort(
+      (a, b) => +new Date(a.created_at) - +new Date(b.created_at),
+    )) {
+      const d = dayKey(new Date(row.created_at));
+      if (d < startCutoff && row.module in running) running[row.module] += Number(row.value);
+    }
+    return days.map((d) => {
+      const bucket = perDay.get(d)!;
+      for (const m of MODULES) running[m.key] += bucket[m.key];
+      let hfi = 0;
+      for (const m of MODULES) hfi += Math.min(1, running[m.key] / 20) * m.weight;
+      const row: Record<string, number | string> = {
+        date: d.slice(5),
+        hfi: Math.round(hfi * 1000) / 10,
+      };
+      for (const m of MODULES) row[m.key] = Math.round(running[m.key] * 10) / 10;
+      return row;
+    });
+  }, [ledger, rangeDays]);
 
   return (
     <div className="min-h-screen bg-parchment text-ink font-mono">
@@ -93,13 +150,101 @@ function SanctumPage() {
           </div>
         </header>
 
+        {/* Trend chart */}
+        <section className="space-y-4">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+              <span className="text-[10px] uppercase tracking-[0.3em] text-copper">Time Series</span>
+              <h2 className="font-serif text-2xl mt-1">
+                {focus === "all"
+                  ? "Trajectory of the Flourishing Index"
+                  : `${MODULES.find((m) => m.key === focus)?.label} · running units`}
+              </h2>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={focus}
+                onChange={(e) => setFocus(e.target.value as ModuleKey | "all")}
+                className="bg-parchment border border-ink/10 rounded-lg px-3 py-1.5 text-xs"
+              >
+                <option value="all">HFI (composite)</option>
+                {MODULES.map((m) => (
+                  <option key={m.key} value={m.key}>{m.label}</option>
+                ))}
+              </select>
+              {[7, 30, 90].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setRangeDays(d)}
+                  className={
+                    "text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full border " +
+                    (rangeDays === d
+                      ? "bg-ink text-parchment border-ink"
+                      : "border-ink/15 text-ink/60 hover:text-ink")
+                  }
+                >
+                  {d}d
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="bg-stone-base/40 border border-ink/10 rounded-xl p-4 h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              {focus === "all" ? (
+                <AreaChart data={series} margin={{ top: 10, right: 12, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="hfiFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#4a6762" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#4a6762" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="#1c1c1a" strokeOpacity={0.05} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fill: "#1c1c1a", fillOpacity: 0.5, fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fill: "#1c1c1a", fillOpacity: 0.5, fontSize: 10 }} tickLine={false} axisLine={false} width={40} />
+                  <Tooltip
+                    contentStyle={{ background: "#f8f7f2", border: "1px solid rgba(28,28,26,0.1)", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "#4a6762" }}
+                  />
+                  <Area type="monotone" dataKey="hfi" stroke="#4a6762" strokeWidth={2} fill="url(#hfiFill)" name="HFI" />
+                </AreaChart>
+              ) : (
+                <LineChart data={series} margin={{ top: 10, right: 12, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#1c1c1a" strokeOpacity={0.05} vertical={false} />
+                  <XAxis dataKey="date" tick={{ fill: "#1c1c1a", fillOpacity: 0.5, fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fill: "#1c1c1a", fillOpacity: 0.5, fontSize: 10 }} tickLine={false} axisLine={false} width={40} />
+                  <Tooltip
+                    contentStyle={{ background: "#f8f7f2", border: "1px solid rgba(28,28,26,0.1)", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "#4a6762" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={focus}
+                    stroke="#4a6762"
+                    strokeWidth={2}
+                    dot={false}
+                    name={MODULES.find((m) => m.key === focus)?.label}
+                  />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+        </section>
+
         {/* Metrics grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-ink/5 ring-1 ring-ink/5 rounded-xl overflow-hidden">
           {MODULES.map((m) => {
             const raw = totals[m.key] ?? 0;
             const pct = Math.min(100, (raw / 20) * 100);
+            const spark = series.map((s) => ({ v: s[m.key] as number }));
             return (
-              <div key={m.key} className="bg-parchment p-8 space-y-4">
+              <button
+                key={m.key}
+                onClick={() => setFocus(m.key)}
+                className={
+                  "bg-parchment p-8 space-y-4 text-left transition-colors " +
+                  (focus === m.key ? "ring-1 ring-copper/40" : "hover:bg-stone-base/40")
+                }
+              >
                 <div className="flex justify-between items-baseline">
                   <span className="text-[10px] uppercase tracking-widest text-copper">
                     {m.label}
@@ -113,7 +258,14 @@ function SanctumPage() {
                 <div className="h-1 bg-ink/5 rounded-full overflow-hidden">
                   <div className="h-full bg-copper transition-all" style={{ width: `${pct}%` }} />
                 </div>
-              </div>
+                <div className="h-8 -mx-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={spark}>
+                      <Line type="monotone" dataKey="v" stroke="#4a6762" strokeWidth={1.5} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </button>
             );
           })}
         </section>

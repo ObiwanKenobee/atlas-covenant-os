@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSanctumRouteImport } from './routes/_authenticated/sanctum'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCommonsIndexRouteImport } from './routes/_authenticated/commons.index'
 import { Route as AuthenticatedCommonsNewRouteImport } from './routes/_authenticated/commons.new'
 import { Route as AuthenticatedCommonsIdRouteImport } from './routes/_authenticated/commons.$id'
@@ -48,6 +49,11 @@ const AuthenticatedGuideRoute = AuthenticatedGuideRouteImport.update({
   path: '/guide',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCommonsIndexRoute =
   AuthenticatedCommonsIndexRouteImport.update({
     id: '/commons/',
@@ -68,6 +74,7 @@ const AuthenticatedCommonsIdRoute = AuthenticatedCommonsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/sanctum': typeof AuthenticatedSanctumRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/guide': typeof AuthenticatedGuideRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/sanctum': typeof AuthenticatedSanctumRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/guide': typeof AuthenticatedGuideRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/sanctum': typeof AuthenticatedSanctumRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/guide'
     | '/onboarding'
     | '/sanctum'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/guide'
     | '/onboarding'
     | '/sanctum'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/guide'
     | '/_authenticated/onboarding'
     | '/_authenticated/sanctum'
@@ -181,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGuideRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/commons/': {
       id: '/_authenticated/commons/'
       path: '/commons'
@@ -206,6 +225,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedGuideRoute: typeof AuthenticatedGuideRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSanctumRoute: typeof AuthenticatedSanctumRoute
@@ -215,6 +235,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedGuideRoute: AuthenticatedGuideRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSanctumRoute: AuthenticatedSanctumRoute,
