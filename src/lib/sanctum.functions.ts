@@ -416,7 +416,7 @@ export const getReflection = createServerFn({ method: "POST" })
     if (!reflection) throw new Error("Reflection not found");
 
     // Ledger entries created around the reflection save (± 2 minutes) count as linked.
-    const created = new Date(reflection.updated_at ?? reflection.created_at);
+    const created = new Date(reflection.created_at);
     const start = new Date(created.getTime() - 2 * 60 * 1000).toISOString();
     const end = new Date(created.getTime() + 2 * 60 * 1000).toISOString();
     const { data: ledger } = await context.supabase
