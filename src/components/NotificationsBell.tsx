@@ -76,9 +76,9 @@ export function NotificationsBell() {
                 </div>
               );
               return n.link ? (
-                <Link
+                <a
                   key={n.id}
-                  to={n.link}
+                  href={n.link}
                   onClick={() => {
                     setOpen(false);
                     if (!n.read_at) mark.mutate([n.id]);
@@ -86,7 +86,7 @@ export function NotificationsBell() {
                   className="block hover:bg-stone-base/40"
                 >
                   {content}
-                </Link>
+                </a>
               ) : (
                 <div key={n.id}>{content}</div>
               );
