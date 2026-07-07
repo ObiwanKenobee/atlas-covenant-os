@@ -186,6 +186,25 @@ function SanctumPage() {
                   {d}d
                 </button>
               ))}
+              <button
+                onClick={() => {
+                  const header = ["date", "hfi", ...MODULES.map((m) => m.key)];
+                  const rows = series.map((r) => header.map((h) => r[h]).join(","));
+                  const csv = [header.join(","), ...rows].join("\n");
+                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `flourishing-index-${rangeDays}d-${new Date().toISOString().slice(0, 10)}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(url);
+                }}
+                className="text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full border border-copper/40 text-copper hover:bg-copper hover:text-parchment transition-colors"
+              >
+                Export CSV ↓
+              </button>
             </div>
           </div>
           <div className="bg-stone-base/40 border border-ink/10 rounded-xl p-4 h-72">
