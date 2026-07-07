@@ -12,6 +12,9 @@ import {
   updateGovernanceSettings,
   listMissions,
   updateMissionQuorum,
+  listAdminInvitations,
+  createAdminInvitation,
+  revokeAdminInvitation,
 } from "@/lib/sanctum.functions";
 import { SanctumNav } from "@/components/SanctumNav";
 
