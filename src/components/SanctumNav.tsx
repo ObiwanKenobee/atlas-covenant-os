@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { amIAdmin } from "@/lib/sanctum.functions";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 const links = [
   { to: "/sanctum", label: "Ledger" },
