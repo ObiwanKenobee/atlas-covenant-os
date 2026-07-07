@@ -400,6 +400,141 @@ export const updateGovernanceSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ---------- Reflection detail ----------
+
+export const getReflection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: reflection, error } = await context.supabase
+      .from("reflection_prompts")
+      .select("*")
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!reflection) throw new Error("Reflection not found");
+
+    // Ledger entries created around the reflection save (± 2 minutes) count as linked.
+    const created = new Date(reflection.created_at);
+    const start = new Date(created.getTime() - 2 * 60 * 1000).toISOString();
+    const end = new Date(created.getTime() + 2 * 60 * 1000).toISOString();
+    const { data: ledger } = await context.supabase
+      .from("ledger_metrics")
+      .select("*")
+      .eq("user_id", context.userId)
+      .gte("created_at", start)
+      .lte("created_at", end)
+      .order("created_at", { ascending: true });
+
+    return { reflection, ledger: ledger ?? [] };
+  });
+
+// ---------- Notifications ----------
+
+export const listNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const markNotificationsRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).max(200).optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const q = context.supabase
+      .from("notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", context.userId)
+      .is("read_at", null);
+    const { error } = data.ids && data.ids.length ? await q.in("id", data.ids) : await q;
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- Admin invitations ----------
+
+async function assertAdmin(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", context.userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden");
+}
+
+export const listAdminInvitations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await context.supabase
+      .from("admin_invitations")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const createAdminInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ email: z.string().email().max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const token =
+      globalThis.crypto?.randomUUID?.().replaceAll("-", "") +
+      Math.random().toString(36).slice(2, 10);
+    const { data: row, error } = await context.supabase
+      .from("admin_invitations")
+      .insert({
+        email: data.email.toLowerCase(),
+        token,
+        invited_by: context.userId,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const revokeAdminInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase
+      .from("admin_invitations")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const acceptAdminInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ token: z.string().min(8).max(80) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc("accept_admin_invitation", {
+      _token: data.token,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    if (!row?.ok) throw new Error(row?.message ?? "Could not accept invitation");
+    return { ok: true, message: row.message };
+  });
+
 export const updateMissionQuorum = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>

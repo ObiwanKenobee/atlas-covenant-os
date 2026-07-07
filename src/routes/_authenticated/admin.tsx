@@ -12,6 +12,9 @@ import {
   updateGovernanceSettings,
   listMissions,
   updateMissionQuorum,
+  listAdminInvitations,
+  createAdminInvitation,
+  revokeAdminInvitation,
 } from "@/lib/sanctum.functions";
 import { SanctumNav } from "@/components/SanctumNav";
 
@@ -49,6 +52,9 @@ function AdminPage() {
   const saveGov = useServerFn(updateGovernanceSettings);
   const fetchMissions = useServerFn(listMissions);
   const setQuorum = useServerFn(updateMissionQuorum);
+  const fetchInvites = useServerFn(listAdminInvitations);
+  const createInvite = useServerFn(createAdminInvitation);
+  const revokeInvite = useServerFn(revokeAdminInvitation);
 
   const { data: admin, isLoading: adminLoading } = useQuery({
     queryKey: ["is-admin"],
@@ -57,10 +63,16 @@ function AdminPage() {
   const { data: causes } = useQuery({ queryKey: ["causes"], queryFn: () => fetchCauses() });
   const { data: gov } = useQuery({ queryKey: ["gov"], queryFn: () => fetchGov() });
   const { data: missions } = useQuery({ queryKey: ["missions"], queryFn: () => fetchMissions() });
+  const { data: invites } = useQuery({
+    queryKey: ["admin-invites"],
+    queryFn: () => fetchInvites(),
+    enabled: !!admin?.isAdmin,
+  });
 
   const [draft, setDraft] = useState<CauseDraft>(EMPTY);
   const [defaultQ, setDefaultQ] = useState<string>("");
   const [missionQ, setMissionQ] = useState<Record<string, string>>({});
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const saveCause = useMutation({
     mutationFn: (d: CauseDraft) =>
@@ -110,6 +122,27 @@ function AdminPage() {
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
+
+  const invite = useMutation({
+    mutationFn: (email: string) => createInvite({ data: { email } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-invites"] });
+      setInviteEmail("");
+      toast.success("Invitation created. Share the link with the invitee.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Invite failed"),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (id: string) => revokeInvite({ data: { id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-invites"] });
+      toast.success("Invitation revoked.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Revoke failed"),
+  });
+
+
 
   if (adminLoading) return null;
   if (!admin?.isAdmin) return <Navigate to="/sanctum" />;
@@ -320,6 +353,98 @@ function AdminPage() {
             {(!causes || causes.length === 0) && (
               <div className="p-8 text-center text-sm text-ink/50">No causes yet.</div>
             )}
+          </div>
+        </section>
+
+        {/* Admin invitations */}
+        <section className="space-y-6">
+          <h2 className="font-serif text-2xl">Admin invitations</h2>
+          <p className="text-sm text-ink/60 max-w-[64ch]">
+            Invite a fellow steward by their sign-in email. Share the generated link — accepting it
+            grants admin access, as long as they're signed in with the matching address.
+          </p>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!inviteEmail.trim()) return;
+              invite.mutate(inviteEmail.trim());
+            }}
+            className="bg-stone-base/40 border border-ink/10 rounded-xl p-6 flex flex-col md:flex-row md:items-end gap-4"
+          >
+            <label className="space-y-1 flex-1">
+              <span className="text-[10px] uppercase tracking-widest text-ink/50">Invitee email</span>
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="steward@example.org"
+                className="w-full bg-parchment border border-ink/10 rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <button
+              disabled={invite.isPending || !inviteEmail.trim()}
+              className="bg-ink text-parchment px-5 py-2 rounded-full text-xs uppercase tracking-widest disabled:opacity-50"
+            >
+              {invite.isPending ? "…" : "Issue invitation"}
+            </button>
+          </form>
+
+          <div className="border border-ink/10 rounded-xl overflow-hidden divide-y divide-ink/5">
+            {(invites ?? []).length === 0 && (
+              <div className="p-6 text-center text-sm text-ink/50">No invitations issued yet.</div>
+            )}
+            {(invites ?? []).map((inv) => {
+              const link =
+                typeof window !== "undefined"
+                  ? `${window.location.origin}/admin/accept/${inv.token}`
+                  : `/admin/accept/${inv.token}`;
+              const used = !!inv.used_at;
+              const expired = new Date(inv.expires_at) < new Date();
+              return (
+                <div key={inv.id} className="p-4 flex flex-col md:flex-row md:items-center gap-3 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <span className="font-serif text-lg">{inv.email}</span>
+                      <span className="text-[10px] uppercase tracking-widest text-copper">
+                        {used ? "accepted" : expired ? "expired" : "pending"}
+                      </span>
+                      <span className="text-[10px] text-ink/40">
+                        {used
+                          ? `used ${new Date(inv.used_at!).toLocaleDateString()}`
+                          : `expires ${new Date(inv.expires_at).toLocaleDateString()}`}
+                      </span>
+                    </div>
+                    {!used && !expired && (
+                      <div className="text-[11px] text-ink/50 mt-1 font-mono truncate select-all">
+                        {link}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-3 shrink-0">
+                    {!used && !expired && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(link);
+                          toast.success("Invitation link copied.");
+                        }}
+                        className="text-[10px] uppercase tracking-widest text-copper hover:text-ink"
+                      >
+                        Copy link
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        if (confirm(`Revoke invitation for ${inv.email}?`)) revoke.mutate(inv.id);
+                      }}
+                      className="text-[10px] uppercase tracking-widest text-ink/40 hover:text-ink"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>

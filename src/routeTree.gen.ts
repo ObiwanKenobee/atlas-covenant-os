@@ -17,8 +17,10 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedGuideRouteImport } from './routes/_authenticated/guide'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedCommonsIndexRouteImport } from './routes/_authenticated/commons.index'
+import { Route as AuthenticatedGuideIdRouteImport } from './routes/_authenticated/guide.$id'
 import { Route as AuthenticatedCommonsNewRouteImport } from './routes/_authenticated/commons.new'
 import { Route as AuthenticatedCommonsIdRouteImport } from './routes/_authenticated/commons.$id'
+import { Route as AuthenticatedAdminAcceptTokenRouteImport } from './routes/_authenticated/admin.accept.$token'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -60,6 +62,11 @@ const AuthenticatedCommonsIndexRoute =
     path: '/commons/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedGuideIdRoute = AuthenticatedGuideIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedGuideRoute,
+} as any)
 const AuthenticatedCommonsNewRoute = AuthenticatedCommonsNewRouteImport.update({
   id: '/commons/new',
   path: '/commons/new',
@@ -70,41 +77,53 @@ const AuthenticatedCommonsIdRoute = AuthenticatedCommonsIdRouteImport.update({
   path: '/commons/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminAcceptTokenRoute =
+  AuthenticatedAdminAcceptTokenRouteImport.update({
+    id: '/accept/$token',
+    path: '/accept/$token',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
-  '/guide': typeof AuthenticatedGuideRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/guide': typeof AuthenticatedGuideRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/sanctum': typeof AuthenticatedSanctumRoute
   '/commons/$id': typeof AuthenticatedCommonsIdRoute
   '/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/guide/$id': typeof AuthenticatedGuideIdRoute
   '/commons/': typeof AuthenticatedCommonsIndexRoute
+  '/admin/accept/$token': typeof AuthenticatedAdminAcceptTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/admin': typeof AuthenticatedAdminRoute
-  '/guide': typeof AuthenticatedGuideRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/guide': typeof AuthenticatedGuideRouteWithChildren
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/sanctum': typeof AuthenticatedSanctumRoute
   '/commons/$id': typeof AuthenticatedCommonsIdRoute
   '/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/guide/$id': typeof AuthenticatedGuideIdRoute
   '/commons': typeof AuthenticatedCommonsIndexRoute
+  '/admin/accept/$token': typeof AuthenticatedAdminAcceptTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
-  '/_authenticated/guide': typeof AuthenticatedGuideRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/guide': typeof AuthenticatedGuideRouteWithChildren
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/sanctum': typeof AuthenticatedSanctumRoute
   '/_authenticated/commons/$id': typeof AuthenticatedCommonsIdRoute
   '/_authenticated/commons/new': typeof AuthenticatedCommonsNewRoute
+  '/_authenticated/guide/$id': typeof AuthenticatedGuideIdRoute
   '/_authenticated/commons/': typeof AuthenticatedCommonsIndexRoute
+  '/_authenticated/admin/accept/$token': typeof AuthenticatedAdminAcceptTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,7 +136,9 @@ export interface FileRouteTypes {
     | '/sanctum'
     | '/commons/$id'
     | '/commons/new'
+    | '/guide/$id'
     | '/commons/'
+    | '/admin/accept/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,7 +149,9 @@ export interface FileRouteTypes {
     | '/sanctum'
     | '/commons/$id'
     | '/commons/new'
+    | '/guide/$id'
     | '/commons'
+    | '/admin/accept/$token'
   id:
     | '__root__'
     | '/'
@@ -140,7 +163,9 @@ export interface FileRouteTypes {
     | '/_authenticated/sanctum'
     | '/_authenticated/commons/$id'
     | '/_authenticated/commons/new'
+    | '/_authenticated/guide/$id'
     | '/_authenticated/commons/'
+    | '/_authenticated/admin/accept/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -207,6 +232,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommonsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/guide/$id': {
+      id: '/_authenticated/guide/$id'
+      path: '/$id'
+      fullPath: '/guide/$id'
+      preLoaderRoute: typeof AuthenticatedGuideIdRouteImport
+      parentRoute: typeof AuthenticatedGuideRoute
+    }
     '/_authenticated/commons/new': {
       id: '/_authenticated/commons/new'
       path: '/commons/new'
@@ -221,12 +253,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommonsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/accept/$token': {
+      id: '/_authenticated/admin/accept/$token'
+      path: '/accept/$token'
+      fullPath: '/admin/accept/$token'
+      preLoaderRoute: typeof AuthenticatedAdminAcceptTokenRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAcceptTokenRoute: typeof AuthenticatedAdminAcceptTokenRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAcceptTokenRoute: AuthenticatedAdminAcceptTokenRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
+interface AuthenticatedGuideRouteChildren {
+  AuthenticatedGuideIdRoute: typeof AuthenticatedGuideIdRoute
+}
+
+const AuthenticatedGuideRouteChildren: AuthenticatedGuideRouteChildren = {
+  AuthenticatedGuideIdRoute: AuthenticatedGuideIdRoute,
+}
+
+const AuthenticatedGuideRouteWithChildren =
+  AuthenticatedGuideRoute._addFileChildren(AuthenticatedGuideRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
-  AuthenticatedGuideRoute: typeof AuthenticatedGuideRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedGuideRoute: typeof AuthenticatedGuideRouteWithChildren
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSanctumRoute: typeof AuthenticatedSanctumRoute
   AuthenticatedCommonsIdRoute: typeof AuthenticatedCommonsIdRoute
@@ -235,8 +296,8 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
-  AuthenticatedGuideRoute: AuthenticatedGuideRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedGuideRoute: AuthenticatedGuideRouteWithChildren,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSanctumRoute: AuthenticatedSanctumRoute,
   AuthenticatedCommonsIdRoute: AuthenticatedCommonsIdRoute,

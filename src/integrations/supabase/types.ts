@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          token: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       governance_settings: {
         Row: {
           default_quorum: number
@@ -107,6 +140,32 @@ export type Database = {
           },
         ]
       }
+      mission_milestones_reached: {
+        Row: {
+          milestone: number
+          mission_id: string
+          reached_at: string
+        }
+        Insert: {
+          milestone: number
+          mission_id: string
+          reached_at?: string
+        }
+        Update: {
+          milestone?: number
+          mission_id?: string
+          reached_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_milestones_reached_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mission_votes: {
         Row: {
           created_at: string
@@ -183,6 +242,50 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          mission_id: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          mission_id?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          mission_id?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       philanthropic_causes: {
         Row: {
@@ -297,6 +400,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_admin_invitation: {
+        Args: { _token: string }
+        Returns: {
+          message: string
+          ok: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
