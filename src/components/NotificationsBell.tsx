@@ -1,7 +1,6 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { listNotifications, markNotificationsRead } from "@/lib/sanctum.functions";
 
 export function NotificationsBell() {
