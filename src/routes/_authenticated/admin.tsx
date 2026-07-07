@@ -123,6 +123,27 @@ function AdminPage() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
   });
 
+  const invite = useMutation({
+    mutationFn: (email: string) => createInvite({ data: { email } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-invites"] });
+      setInviteEmail("");
+      toast.success("Invitation created. Share the link with the invitee.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Invite failed"),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (id: string) => revokeInvite({ data: { id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-invites"] });
+      toast.success("Invitation revoked.");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Revoke failed"),
+  });
+
+
+
   if (adminLoading) return null;
   if (!admin?.isAdmin) return <Navigate to="/sanctum" />;
 
