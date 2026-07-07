@@ -52,6 +52,9 @@ function AdminPage() {
   const saveGov = useServerFn(updateGovernanceSettings);
   const fetchMissions = useServerFn(listMissions);
   const setQuorum = useServerFn(updateMissionQuorum);
+  const fetchInvites = useServerFn(listAdminInvitations);
+  const createInvite = useServerFn(createAdminInvitation);
+  const revokeInvite = useServerFn(revokeAdminInvitation);
 
   const { data: admin, isLoading: adminLoading } = useQuery({
     queryKey: ["is-admin"],
@@ -60,10 +63,16 @@ function AdminPage() {
   const { data: causes } = useQuery({ queryKey: ["causes"], queryFn: () => fetchCauses() });
   const { data: gov } = useQuery({ queryKey: ["gov"], queryFn: () => fetchGov() });
   const { data: missions } = useQuery({ queryKey: ["missions"], queryFn: () => fetchMissions() });
+  const { data: invites } = useQuery({
+    queryKey: ["admin-invites"],
+    queryFn: () => fetchInvites(),
+    enabled: !!admin?.isAdmin,
+  });
 
   const [draft, setDraft] = useState<CauseDraft>(EMPTY);
   const [defaultQ, setDefaultQ] = useState<string>("");
   const [missionQ, setMissionQ] = useState<Record<string, string>>({});
+  const [inviteEmail, setInviteEmail] = useState("");
 
   const saveCause = useMutation({
     mutationFn: (d: CauseDraft) =>
