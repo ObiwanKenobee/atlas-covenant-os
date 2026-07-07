@@ -41,6 +41,7 @@ export function SanctumNav() {
               Admin
             </Link>
           )}
+          <NotificationsBell />
           <button
             onClick={async () => {
               await supabase.auth.signOut();
