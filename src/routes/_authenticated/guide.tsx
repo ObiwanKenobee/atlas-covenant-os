@@ -131,7 +131,13 @@ function GuidePage() {
                     Atlas Guide · {new Date(r.created_at).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="font-serif text-2xl leading-snug text-ink">{r.prompt}</p>
+                <Link
+                  to="/guide/$id"
+                  params={{ id: r.id }}
+                  className="block font-serif text-2xl leading-snug text-ink hover:text-copper transition-colors"
+                >
+                  {r.prompt}
+                </Link>
 
                 {r.reflection ? (
                   <div className="border-l border-copper/40 pl-4 text-sm text-ink/80 leading-relaxed whitespace-pre-wrap">
